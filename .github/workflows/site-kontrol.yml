@@ -11,6 +11,9 @@ jobs:
   playwright-test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+     defaults:
+      run:
+        working-directory: .github/workflows
 
     steps:
       - name: 1. Repodaki Kodlari Sanal Makineye Cek
