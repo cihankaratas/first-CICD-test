@@ -1,0 +1,33 @@
+name: Web Sitesi Kontrol Otomasyonu
+
+# Tetikleyiciler (Triggers) - Bu iş ne zaman çalışacak?
+on:
+  # 1. Zamanlayıcı: Her 5 dakikada bir otomatik çalış
+  schedule:
+    - cron: '*/5 * * * *'
+  
+  # 2. Manuel Tetikleme: İstediğimiz an butona basıp çalıştırabilelim diye
+  workflow_dispatch:
+
+# Yapılacak İşler (Jobs)
+jobs:
+  siteyi-ziyaret-et:
+    # GitHub'dan ücretsiz bir Ubuntu Linux sunucusu istiyoruz
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Adım - Bilgi Ver
+        run: echo "Otomasyon basladi! Hedef site kontrol ediliyor..."
+
+      - name: 2. Adım - Siteye Istek At (Ziyaret Et)
+        run: |
+          # curl komutu ile siteye gidip HTTP durum kodunu alıyoruz
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://www.youtube.com)
+          echo "Site Durum Kodu: $STATUS"
+          
+          # Eğer durum kodu 200 (Başarılı) değilse pipeline hata versin!
+          if [ "$STATUS" -ne 200 ]; then
+            echo "HATA: Siteye erisilemiyor!"
+            exit 1
+          fi
+          echo "BASARILI: Site sorunsuz calisiyor!"
