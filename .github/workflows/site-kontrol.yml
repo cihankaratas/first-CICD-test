@@ -1,33 +1,39 @@
-name: Web Sitesi Kontrol Otomasyonu
+name: Playwright YouTube CI Otomasyonu
 
-# Tetikleyiciler (Triggers) - Bu iş ne zaman çalışacak?
 on:
-  # 1. Zamanlayıcı: Her 5 dakikada bir otomatik çalış
+  push:
+    branches: [ main ] # Her kod gonderdiginde otomatik test et
   schedule:
-    - cron: '*/5 * * * *'
-  
-  # 2. Manuel Tetikleme: İstediğimiz an butona basıp çalıştırabilelim diye
-  workflow_dispatch:
+    - cron: '*/5 * * * *' # Her 5 dakikada bir otomatik calistir
+  workflow_dispatch: # Manuel tetikleme butonu
 
-# Yapılacak İşler (Jobs)
 jobs:
-  siteyi-ziyaret-et:
-    # GitHub'dan ücretsiz bir Ubuntu Linux sunucusu istiyoruz
+  playwright-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-      - name: 1. Adım - Bilgi Ver
-        run: echo "Otomasyon basladi! Hedef site kontrol ediliyor..."
+      - name: 1. Repodaki Kodlari Sanal Makineye Cek
+        uses: actions/checkout@v4
 
-      - name: 2. Adım - Siteye Istek At (Ziyaret Et)
-        run: |
-          # curl komutu ile siteye gidip HTTP durum kodunu alıyoruz
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://www.youtube.com)
-          echo "Site Durum Kodu: $STATUS"
-          
-          # Eğer durum kodu 200 (Başarılı) değilse pipeline hata versin!
-          if [ "$STATUS" -ne 200 ]; then
-            echo "HATA: Siteye erisilemiyor!"
-            exit 1
-          fi
-          echo "BASARILI: Site sorunsuz calisiyor!"
+      - name: 2. Node.js Ortamini Kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 3. Playwright ve Bagimliliklari Yukle
+        run: npm install
+
+      - name: 4. Chromium Tarayicisini Kur
+        run: npx playwright install --with-deps chromium
+
+      - name: 5. Playwright Testlerini Calistir
+        run: npx playwright test
+
+      - name: 6. Test Raporunu (HTML Report) Kaydet
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }} # Test gecse de kalsa da raporu kaydet!
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
